@@ -296,6 +296,10 @@ export class Game extends Phaser.Scene {
         this.gameOver = true;
         this.timerText.setText('0');
 
+        // Hide pause control because the session is already finished.
+        this.pauseButton.setVisible(false);
+        this.pauseButton.disableInteractive();
+
         // Stop active firefly movement and place it in a calm end-session position.
         this.tweens.killTweensOf(this.firefly);
         this.firefly.setPosition(centerX, 520);
