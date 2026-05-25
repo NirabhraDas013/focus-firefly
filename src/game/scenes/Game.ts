@@ -21,6 +21,14 @@ export class Game extends Phaser.Scene {
     score = 0;
     scoreText!: Phaser.GameObjects.Text;
 
+    // Gameplay stats tracked separately from score.
+    // These will be useful later for the results screen.
+    correctTaps = 0;
+    wrongTaps = 0;
+
+    correctText!: Phaser.GameObjects.Text;
+    wrongText!: Phaser.GameObjects.Text;
+
     constructor() {
         // This scene key must match whatever the menu uses:
         // this.scene.start('Game')
@@ -57,6 +65,24 @@ export class Game extends Phaser.Scene {
             color: '#8cffd2',
             stroke: '#00251a',
             strokeThickness: 4
+        }).setOrigin(0, 0.5);
+
+        // Shows how many correct flash clicks the player has made.
+        this.correctText = this.add.text(40, 95, 'Correct: 0', {
+            fontFamily: 'Arial Black',
+            fontSize: 18,
+            color: '#b6ffe8',
+            stroke: '#00251a',
+            strokeThickness: 3
+        }).setOrigin(0, 0.5);
+
+        // Shows how many wrong clicks the player has made.
+        this.wrongText = this.add.text(40, 122, 'Wrong: 0', {
+            fontFamily: 'Arial Black',
+            fontSize: 18,
+            color: '#ffb6b6',
+            stroke: '#2a0000',
+            strokeThickness: 3
         }).setOrigin(0, 0.5);
 
         // --- Firefly visual pieces ---
@@ -104,19 +130,28 @@ export class Game extends Phaser.Scene {
         // For now:
         // - clicking during a flash is correct
         // - clicking outside a flash is wrong
+        // Handles scoring and tap stats whenever the firefly is clicked.
         this.firefly.on('pointerdown', () => {
             if (this.isFlashing && !this.hasClickedCurrentFlash) {
                 this.score += 100;
+                this.correctTaps += 1;
                 this.hasClickedCurrentFlash = true;
+
+                this.scoreText.setText(`Score: ${this.score}`);
+                this.correctText.setText(`Correct: ${this.correctTaps}`);
+
                 console.log('Correct tap!');
             } else if (!this.isFlashing) {
                 this.score = Math.max(0, this.score - 25);
+                this.wrongTaps += 1;
+
+                this.scoreText.setText(`Score: ${this.score}`);
+                this.wrongText.setText(`Wrong: ${this.wrongTaps}`);
+
                 console.log('Wrong tap.');
             } else {
                 console.log('Already clicked this flash.');
             }
-
-            this.scoreText.setText(`Score: ${this.score}`);
         });
 
         // --- Glow pulse animation ---
