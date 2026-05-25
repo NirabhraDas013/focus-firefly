@@ -38,8 +38,9 @@ export class Game extends Phaser.Scene {
     gameOver = false;
     timerBackground!: Phaser.GameObjects.Rectangle;
 
-    // This text appears at the end of the game to show the final score and feedback.
+    // This text is shown at the end of the session.
     endMessageText!: Phaser.GameObjects.Text;
+    restartText!: Phaser.GameObjects.Text;
 
     constructor() {
         // This scene key must match whatever the menu uses:
@@ -48,6 +49,8 @@ export class Game extends Phaser.Scene {
     }
 
     create() {
+        this.resetState();
+
         // Set the main play-area background color.
         this.cameras.main.setBackgroundColor('#080b2f');
 
@@ -58,7 +61,7 @@ export class Game extends Phaser.Scene {
         this.timerBackground = this.add.rectangle(centerX, 40, 84, 50, 0x000000, 0.35)
             .setStrokeStyle(2, 0xffffff, 0.35);
 
-        this.timerText = this.add.text(centerX, 40, '45', {
+        this.timerText = this.add.text(centerX, 40, `${this.timeLeft}`, {
             fontFamily: 'Arial Black',
             fontSize: 34,
             color: '#ffffff',
@@ -243,6 +246,16 @@ export class Game extends Phaser.Scene {
                         strokeThickness: 6
                     }).setOrigin(0.5);
 
+                    this.restartText = this.add.text(centerX, 280, 'Click or tap to try again', {
+                        fontFamily: 'Arial',
+                        fontSize: 22,
+                        color: '#cfd8ff'
+                    }).setOrigin(0.5);
+
+                    this.input.once('pointerdown', () => {
+                        this.scene.restart();
+                    });
+
                     console.log('Game over.');
                 }
             }
@@ -327,5 +340,19 @@ export class Game extends Phaser.Scene {
 
         // Schedule another flash later.
         this.scheduleNextFlash();
+    }
+
+    resetState() {
+        // Reset session state whenever the scene starts or restarts.
+        this.score = 0;
+        this.correctTaps = 0;
+        this.wrongTaps = 0;
+        this.missedFlashes = 0;
+
+        this.timeLeft = 45;
+        this.gameOver = false;
+
+        this.isFlashing = false;
+        this.hasClickedCurrentFlash = false;
     }
 }
