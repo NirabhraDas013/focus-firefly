@@ -7,9 +7,18 @@ export class Game extends Phaser.Scene
     // Moving the container moves the whole firefly together.
     firefly!: Phaser.GameObjects.Container;
 
+    // These are stored as class properties because we need to change
+    // their colors when the firefly flashes.
+    fireflyBody!: Phaser.GameObjects.Ellipse;
+    fireflyCore!: Phaser.GameObjects.Arc;
+
+    // Tracks whether the player should currently click/tap.
+    isFlashing = false;
+
     constructor ()
     {
-        // Scene key must match whatever the menu uses: this.scene.start('Game')
+        // This scene key must match whatever the menu uses:
+        // this.scene.start('Game')
         super('Game');
     }
 
@@ -29,7 +38,7 @@ export class Game extends Phaser.Scene
         }).setOrigin(0.5);
 
         // Short instruction text under the title.
-        this.add.text(512, 110, 'Follow the firefly with your eyes.', {
+        this.add.text(512, 110, 'Click the firefly when it flashes gold.', {
             fontFamily: 'Arial',
             fontSize: 20,
             color: '#d7e8ff',
@@ -51,8 +60,8 @@ export class Game extends Phaser.Scene
         rightWing.setRotation(0.5);
 
         // Body and bright center.
-        const body = this.add.ellipse(0, 4, 16, 24, 0x5fffc9, 1);
-        const core = this.add.circle(0, 4, 8, 0xfff7a8, 1);
+        this.fireflyBody = this.add.ellipse(0, 4, 16, 24, 0x5fffc9, 1);
+        this.fireflyCore = this.add.circle(0, 4, 8, 0xfff7a8, 1);
 
         // --- Firefly container ---
         // The container is positioned in the middle of the screen.
@@ -63,8 +72,8 @@ export class Game extends Phaser.Scene
             innerGlow,
             leftWing,
             rightWing,
-            body,
-            core
+            this.fireflyBody,
+            this.fireflyCore
         ]);
 
         // Give the container a clickable area.
@@ -80,7 +89,7 @@ export class Game extends Phaser.Scene
         // Temporary click test.
         // Later this will become correct/wrong tap scoring.
         this.firefly.on('pointerdown', () => {
-            console.log('Firefly clicked');
+            console.log('Firefly clicked. Flashing:', this.isFlashing);
         });
 
         // --- Glow pulse animation ---
@@ -108,6 +117,9 @@ export class Game extends Phaser.Scene
 
         // Start the movement loop.
         this.moveFirefly();
+
+        // Start the flash loop.
+        this.scheduleNextFlash();
     }
 
     moveFirefly ()
@@ -131,5 +143,51 @@ export class Game extends Phaser.Scene
                 this.moveFirefly();
             }
         });
+    }
+
+    scheduleNextFlash ()
+    {
+        // Pick a random delay before the next flash.
+        // This prevents the player from knowing exactly when it will happen.
+        const delay = Phaser.Math.Between(1500, 3000);
+
+        this.time.delayedCall(delay, () => {
+            this.startFlash();
+        });
+    }
+
+    startFlash ()
+    {
+        this.isFlashing = true;
+
+        // Change the firefly to gold so the player knows to click.
+        this.fireflyBody.setFillStyle(0xffd84d, 1);
+        this.fireflyCore.setFillStyle(0xffffff, 1);
+
+        // Make the whole firefly pop a little.
+        this.tweens.add({
+            targets: this.firefly,
+            scale: 1.18,
+            duration: 120,
+            yoyo: true,
+            ease: 'Sine.easeInOut'
+        });
+
+        // The flash only lasts a short time.
+        this.time.delayedCall(800, () => {
+            this.endFlash();
+        });
+    }
+
+    endFlash ()
+    {
+        this.isFlashing = false;
+
+        // Return to normal firefly colors.
+        this.fireflyBody.setFillStyle(0x5fffc9, 1);
+        this.fireflyCore.setFillStyle(0xfff7a8, 1);
+
+        // Schedule another flash later.
+        this.scheduleNextFlash();
     }
 }
