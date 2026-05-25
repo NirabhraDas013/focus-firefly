@@ -33,7 +33,8 @@ export class Game extends Phaser.Scene {
     missedText!: Phaser.GameObjects.Text;
 
     // Each game session lasts a certain amount of time. This is the countdown timer.
-    timeLeft = 45;
+    baseTimeLeft = 5; //This can move to some sort of editable file later
+    timeLeft = this.baseTimeLeft;
     timerText!: Phaser.GameObjects.Text;
     gameOver = false;
     timerBackground!: Phaser.GameObjects.Rectangle;
@@ -235,31 +236,85 @@ export class Game extends Phaser.Scene {
                 this.timerText.setText(`${this.timeLeft}`);
 
                 if (this.timeLeft <= 0) {
-                    this.gameOver = true;
-                    this.timerText.setText('0');
-
-                    this.endMessageText = this.add.text(centerX, 230, 'Session Complete', {
-                        fontFamily: 'Arial Black',
-                        fontSize: 36,
-                        color: '#ffffff',
-                        stroke: '#000000',
-                        strokeThickness: 6
-                    }).setOrigin(0.5);
-
-                    this.restartText = this.add.text(centerX, 280, 'Click or tap to try again', {
-                        fontFamily: 'Arial',
-                        fontSize: 22,
-                        color: '#cfd8ff'
-                    }).setOrigin(0.5);
-
-                    this.input.once('pointerdown', () => {
-                        this.scene.restart();
-                    });
-
-                    console.log('Game over.');
+                    this.endSession(centerX);
                 }
             }
         });
+    }
+
+    endSession(centerX: number) {
+        this.gameOver = true;
+        this.timerText.setText('0');
+
+        // Stop active firefly movement and place it in a calm end-session position.
+        this.tweens.killTweensOf(this.firefly);
+        this.firefly.setPosition(centerX, 520);
+        this.firefly.setScale(1);
+        this.fireflyBody.setFillStyle(0x5fffc9, 1);
+        this.fireflyCore.setFillStyle(0xfff7a8, 1);
+
+        // Hide live HUD stats once the final result summary is shown.
+        this.scoreText.setVisible(false);
+        this.correctText.setVisible(false);
+        this.wrongText.setVisible(false);
+        this.missedText.setVisible(false);
+
+        this.endMessageText = this.add.text(centerX, 270, 'Session Complete', {
+            fontFamily: 'Arial Black',
+            fontSize: 36,
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 6
+        }).setOrigin(0.5);
+
+        // Final session stats, centered as one group.
+        const finalStats = this.add.container(centerX, 320);
+
+        finalStats.add([
+            this.add.text(-210, 0, `Score: ${this.score}`, {
+                fontFamily: 'Arial Black',
+                fontSize: 20,
+                color: '#8cffd2',
+                stroke: '#00251a',
+                strokeThickness: 3
+            }).setOrigin(0.5),
+
+            this.add.text(-70, 0, `Correct: ${this.correctTaps}`, {
+                fontFamily: 'Arial Black',
+                fontSize: 20,
+                color: '#b6ffe8',
+                stroke: '#00251a',
+                strokeThickness: 3
+            }).setOrigin(0.5),
+
+            this.add.text(80, 0, `Wrong: ${this.wrongTaps}`, {
+                fontFamily: 'Arial Black',
+                fontSize: 20,
+                color: '#ffb6b6',
+                stroke: '#2a0000',
+                strokeThickness: 3
+            }).setOrigin(0.5),
+
+            this.add.text(225, 0, `Missed: ${this.missedFlashes}`, {
+                fontFamily: 'Arial Black',
+                fontSize: 20,
+                color: '#ffd27f',
+                stroke: '#2a1600',
+                strokeThickness: 3
+            }).setOrigin(0.5)
+        ]);
+
+        this.restartText = this.add.text(centerX, 370, 'Click or tap to try again', {
+            fontFamily: 'Arial',
+            fontSize: 22,
+            color: '#cfd8ff'
+        }).setOrigin(0.5);
+
+        this.input.once('pointerdown', () => {
+            this.scene.restart();
+        });
+
+        console.log('Game over.');
     }
 
     moveFirefly() {
@@ -325,6 +380,10 @@ export class Game extends Phaser.Scene {
     }
 
     endFlash() {
+        if (this.gameOver) {
+            return;
+        }
+
         // If the player did not click during the flash, count it as a miss.
         if (!this.hasClickedCurrentFlash) {
             this.missedFlashes += 1;
@@ -349,7 +408,7 @@ export class Game extends Phaser.Scene {
         this.wrongTaps = 0;
         this.missedFlashes = 0;
 
-        this.timeLeft = 45;
+        this.timeLeft = this.baseTimeLeft;
         this.gameOver = false;
 
         this.isFlashing = false;
