@@ -1,52 +1,50 @@
 import * as Phaser from 'phaser';
+import {
+    createFirefly,
+    startFireflyIdleAnimations,
+    setFireflyNormal,
+    setFireflyFlashing,
+    type FireflyParts
+} from '../components/Firefly';
 
 export class FollowMode extends Phaser.Scene {
-    // This container will hold every visual part of the firefly:
-    // glow rings, wings, body, and core.
-    // Moving the container moves the whole firefly together.
+    // Main firefly container used by movement, input, and tweens.
     firefly!: Phaser.GameObjects.Container;
 
-    // These are stored as class properties because we need to change
-    // their colors when the firefly flashes.
-    fireflyBody!: Phaser.GameObjects.Ellipse;
-    fireflyCore!: Phaser.GameObjects.Arc;
+    // Reusable firefly visual parts shared with previews/other modes.
+    fireflyParts!: FireflyParts;
 
-    // Tracks whether the player should currently click/tap.
+    // Flash/scoring state.
     isFlashing = false;
-
-    // Prevents the player from scoring multiple times during one flash.
     hasClickedCurrentFlash = false;
 
-    // Basic score state for the current session.
+    // Score and gameplay stats.
     score = 0;
-    scoreText!: Phaser.GameObjects.Text;
-
-    // Gameplay stats tracked separately from score.
-    // These will be useful later for the results screen.
     correctTaps = 0;
     wrongTaps = 0;
+    missedFlashes = 0;
 
-    // These text objects show the Correct/Wrong/Missed counts on the screen
+    scoreText!: Phaser.GameObjects.Text;
     correctText!: Phaser.GameObjects.Text;
     wrongText!: Phaser.GameObjects.Text;
-    missedFlashes = 0;
     missedText!: Phaser.GameObjects.Text;
 
-    // Each game session lasts a certain amount of time. This is the countdown timer.
-    baseTimeLeft = 45; //This can move to some sort of editable file later
+    // Session timer.
+    baseTimeLeft = 45; // This can move to a config file later.
     timeLeft = this.baseTimeLeft;
     timerText!: Phaser.GameObjects.Text;
-    gameOver = false;
     timerBackground!: Phaser.GameObjects.Rectangle;
     sessionTimerEvent?: Phaser.Time.TimerEvent;
 
-    // This text is shown at the end of the session.
+    // Session state.
+    gameOver = false;
+    isPaused = false;
+
+    // End-session UI.
     endMessageText!: Phaser.GameObjects.Text;
     restartText!: Phaser.GameObjects.Text;
 
-    // Pause state and pause menu objects.
-    isPaused = false;
-
+    // Pause menu UI.
     pauseButton!: Phaser.GameObjects.Text;
     pauseOverlay!: Phaser.GameObjects.Rectangle;
     pauseTitleText!: Phaser.GameObjects.Text;
@@ -55,21 +53,17 @@ export class FollowMode extends Phaser.Scene {
     quitButton!: Phaser.GameObjects.Text;
 
     constructor() {
-        // This scene key must match whatever the menu uses:
-        // this.scene.start('Game')
         super('FollowMode');
     }
 
     create() {
         this.resetState();
 
-        // Set the main play-area background color.
         this.cameras.main.setBackgroundColor('#080b2f');
 
-        // Center X coordinate for easy reference when placing things in the middle.
         const centerX = this.cameras.main.centerX;
 
-        // Main countdown badge.
+        // --- Timer badge ---
         this.timerBackground = this.add.rectangle(centerX, 40, 84, 50, 0x000000, 0.35)
             .setStrokeStyle(2, 0xffffff, 0.35);
 
@@ -81,7 +75,7 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 5
         }).setOrigin(0.5);
 
-        // Top title text for the game mode.
+        // --- Title and instructions ---
         this.add.text(centerX, 105, 'Follow Mode', {
             fontFamily: 'Arial Black',
             fontSize: 36,
@@ -91,7 +85,6 @@ export class FollowMode extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
 
-        // Short instruction text under the title.
         this.add.text(centerX, 155, 'Click the firefly when it flashes gold.', {
             fontFamily: 'Arial',
             fontSize: 20,
@@ -99,8 +92,7 @@ export class FollowMode extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
 
-        // Score display.
-        // setOrigin(0, 0.5) means the text is anchored from its left-center.
+        // --- Live HUD stats ---
         this.scoreText = this.add.text(40, 60, 'Score: 0', {
             fontFamily: 'Arial Black',
             fontSize: 24,
@@ -109,7 +101,6 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0, 0.5);
 
-        // Shows how many correct flash clicks the player has made.
         this.correctText = this.add.text(40, 95, 'Correct: 0', {
             fontFamily: 'Arial Black',
             fontSize: 18,
@@ -118,7 +109,6 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0, 0.5);
 
-        // Shows how many wrong clicks the player has made.
         this.wrongText = this.add.text(40, 122, 'Wrong: 0', {
             fontFamily: 'Arial Black',
             fontSize: 18,
@@ -127,7 +117,6 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0, 0.5);
 
-        // Shows how many flashes the player has missed (not clicking during a flash).
         this.missedText = this.add.text(40, 149, 'Missed: 0', {
             fontFamily: 'Arial Black',
             fontSize: 18,
@@ -136,7 +125,7 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0, 0.5);
 
-        // Top-right pause button.
+        // --- Pause button ---
         this.pauseButton = this.add.text(950, 40, 'Pause', {
             fontFamily: 'Arial Black',
             fontSize: 20,
@@ -145,14 +134,12 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        // Pause button click handler.
         this.pauseButton.on('pointerdown', () => {
             if (!this.gameOver) {
                 this.openPauseMenu(centerX);
             }
         });
 
-        // Keyboard pause shortcut.
         this.input.keyboard?.on('keydown-ESC', () => {
             if (!this.gameOver) {
                 if (this.isPaused) {
@@ -173,52 +160,19 @@ export class FollowMode extends Phaser.Scene {
             }
         });
 
-        // --- Firefly visual pieces ---
-        // These circles create a soft glow around the firefly.
-        // They are placed at 0,0 because they will live inside the container.
-        const outerGlow = this.add.circle(0, 0, 64, 0x8cffd2, 0.06);
-        const midGlow = this.add.circle(0, 0, 44, 0x8cffd2, 0.10);
-        const innerGlow = this.add.circle(0, 0, 28, 0x8cffd2, 0.18);
+        // --- Reusable firefly visual ---
+        this.fireflyParts = createFirefly(this, centerX, 384);
+        this.firefly = this.fireflyParts.container;
 
-        // Small translucent wings.
-        const leftWing = this.add.ellipse(-13, -4, 22, 12, 0xd7fff5, 0.35);
-        leftWing.setRotation(-0.5);
-
-        const rightWing = this.add.ellipse(13, -4, 22, 12, 0xd7fff5, 0.35);
-        rightWing.setRotation(0.5);
-
-        // Body and bright center.
-        this.fireflyBody = this.add.ellipse(0, 4, 16, 24, 0x5fffc9, 1);
-        this.fireflyCore = this.add.circle(0, 4, 8, 0xfff7a8, 1);
-
-        // --- Firefly container ---
-        // The container is positioned in the middle of the screen.
-        // All child objects use positions relative to the container.
-        this.firefly = this.add.container(centerX, 384, [
-            outerGlow,
-            midGlow,
-            innerGlow,
-            leftWing,
-            rightWing,
-            this.fireflyBody,
-            this.fireflyCore
-        ]);
-
-        // Give the container a clickable area.
-        // Containers do not automatically know their visual bounds,
-        // so we manually set a size for input detection.
         this.firefly.setSize(90, 90);
-
-        // Make the firefly respond to pointer input.
         this.firefly.setInteractive({
             useHandCursor: true
         });
 
-        // Firefly click/tap scoring.
-        // For now:
-        // - clicking during a flash is correct
-        // - clicking outside a flash is wrong
-        // Handles scoring and tap stats whenever the firefly is clicked.
+        // Shared idle animation for glow and wings.
+        startFireflyIdleAnimations(this, this.fireflyParts);
+
+        // --- Firefly click/tap scoring ---
         this.firefly.on('pointerdown', () => {
             if (this.gameOver || this.isPaused) {
                 return;
@@ -246,37 +200,10 @@ export class FollowMode extends Phaser.Scene {
             }
         });
 
-        // --- Glow pulse animation ---
-        // This makes the glow slowly expand and shrink forever.
-        this.tweens.add({
-            targets: [outerGlow, midGlow, innerGlow],
-            scale: 1.12,
-            alpha: 0.14,
-            duration: 900,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-
-        // --- Wing flap animation ---
-        // This quickly squashes the wings up/down forever.
-        this.tweens.add({
-            targets: [leftWing, rightWing],
-            scaleY: 0.65,
-            duration: 120,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-
-        // Start the movement loop.
         this.moveFirefly();
-
-        // Start the flash loop.
         this.scheduleNextFlash();
 
-        // Counts down once per second.
-        // Uses loop instead of repeat so pause does not consume the remaining timer ticks.
+        // Uses loop instead of repeat so pause does not consume remaining ticks.
         this.sessionTimerEvent = this.time.addEvent({
             delay: 1000,
             loop: true,
@@ -304,20 +231,18 @@ export class FollowMode extends Phaser.Scene {
         this.pauseButton.setVisible(false);
         this.pauseButton.disableInteractive();
 
-        // Stop active firefly movement and place it in a calm end-session position.
+        // Stop movement and place the firefly in a calm end-session position.
         this.tweens.killTweensOf(this.firefly);
         this.firefly.setPosition(centerX, 520);
         this.firefly.setScale(1);
-        this.fireflyBody.setFillStyle(0x5fffc9, 1);
-        this.fireflyCore.setFillStyle(0xfff7a8, 1);
+        setFireflyNormal(this.fireflyParts);
 
-        // Hide live HUD stats once the final result summary is shown.
+        // Hide live HUD stats once the final summary is shown.
         this.scoreText.setVisible(false);
         this.correctText.setVisible(false);
         this.wrongText.setVisible(false);
         this.missedText.setVisible(false);
 
-        // Calculate final accuracy from all flash-related outcomes.
         const totalAttempts = this.correctTaps + this.wrongTaps + this.missedFlashes;
 
         const accuracy = totalAttempts > 0
@@ -332,7 +257,7 @@ export class FollowMode extends Phaser.Scene {
             strokeThickness: 6
         }).setOrigin(0.5);
 
-        // Final session stats, centered as one group.
+        // Final stats are grouped so they stay visually centered.
         const finalStats = this.add.container(centerX, 320);
 
         finalStats.add([
@@ -505,21 +430,15 @@ export class FollowMode extends Phaser.Scene {
             return;
         }
 
-        // Pick a random target position inside safe screen bounds.
-        // We avoid the very edges so the firefly does not go off-screen.
         const targetX = Phaser.Math.Between(140, 884);
         const targetY = Phaser.Math.Between(180, 650);
 
-        // Tween smoothly moves the firefly container to the target.
         this.tweens.add({
             targets: this.firefly,
             x: targetX,
             y: targetY,
             duration: 1800,
             ease: 'Sine.easeInOut',
-
-            // When the movement finishes, choose a new target
-            // and move again. This creates continuous movement.
             onComplete: () => {
                 this.moveFirefly();
             }
@@ -527,8 +446,6 @@ export class FollowMode extends Phaser.Scene {
     }
 
     scheduleNextFlash() {
-        // Pick a random delay before the next flash.
-        // This prevents the player from knowing exactly when it will happen.
         const delay = Phaser.Math.Between(1500, 3000);
 
         this.time.delayedCall(delay, () => {
@@ -542,12 +459,10 @@ export class FollowMode extends Phaser.Scene {
         }
 
         this.isFlashing = true;
+        this.hasClickedCurrentFlash = false;
 
-        // Change the firefly to gold so the player knows to click.
-        this.fireflyBody.setFillStyle(0xffd84d, 1);
-        this.fireflyCore.setFillStyle(0xffffff, 1);
+        setFireflyFlashing(this.fireflyParts);
 
-        // Make the whole firefly pop a little.
         this.tweens.add({
             targets: this.firefly,
             scale: 1.18,
@@ -556,7 +471,6 @@ export class FollowMode extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // The flash only lasts a short time.
         this.time.delayedCall(800, () => {
             this.endFlash();
         });
@@ -567,7 +481,6 @@ export class FollowMode extends Phaser.Scene {
             return;
         }
 
-        // If the player did not click during the flash, count it as a miss.
         if (!this.hasClickedCurrentFlash) {
             this.missedFlashes += 1;
             this.missedText.setText(`Missed: ${this.missedFlashes}`);
@@ -576,16 +489,12 @@ export class FollowMode extends Phaser.Scene {
         this.isFlashing = false;
         this.hasClickedCurrentFlash = false;
 
-        // Return to normal firefly colors.
-        this.fireflyBody.setFillStyle(0x5fffc9, 1);
-        this.fireflyCore.setFillStyle(0xfff7a8, 1);
+        setFireflyNormal(this.fireflyParts);
 
-        // Schedule another flash later.
         this.scheduleNextFlash();
     }
 
     resetState() {
-        // Reset session state whenever the scene starts or restarts.
         this.score = 0;
         this.correctTaps = 0;
         this.wrongTaps = 0;
