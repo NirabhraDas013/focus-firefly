@@ -26,12 +26,17 @@ export class Game extends Phaser.Scene {
     correctTaps = 0;
     wrongTaps = 0;
 
-    //Track missed flashes (not clicking during a flash)
+    // These text objects show the Correct/Wrong/Missed counts on the screen
+    correctText!: Phaser.GameObjects.Text;
+    wrongText!: Phaser.GameObjects.Text;
     missedFlashes = 0;
     missedText!: Phaser.GameObjects.Text;
 
-    correctText!: Phaser.GameObjects.Text;
-    wrongText!: Phaser.GameObjects.Text;
+    // Each game session lasts a certain amount of time. This is the countdown timer.
+    timeLeft = 45;
+    timerText!: Phaser.GameObjects.Text;
+    gameOver = false;
+    timerBackground!: Phaser.GameObjects.Rectangle;
 
     constructor() {
         // This scene key must match whatever the menu uses:
@@ -43,8 +48,23 @@ export class Game extends Phaser.Scene {
         // Set the main play-area background color.
         this.cameras.main.setBackgroundColor('#080b2f');
 
+        // Center X coordinate for easy reference when placing things in the middle.
+        const centerX = this.cameras.main.centerX;
+
+        // Main countdown badge.
+        this.timerBackground = this.add.rectangle(centerX, 40, 84, 50, 0x000000, 0.35)
+            .setStrokeStyle(2, 0xffffff, 0.35);
+
+        this.timerText = this.add.text(centerX, 40, '45', {
+            fontFamily: 'Arial Black',
+            fontSize: 34,
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 5
+        }).setOrigin(0.5);
+
         // Top title text for the game mode.
-        this.add.text(512, 60, 'Follow Mode', {
+        this.add.text(centerX, 105, 'Follow Mode', {
             fontFamily: 'Arial Black',
             fontSize: 36,
             color: '#ffffff',
@@ -54,7 +74,7 @@ export class Game extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Short instruction text under the title.
-        this.add.text(512, 110, 'Click the firefly when it flashes gold.', {
+        this.add.text(centerX, 155, 'Click the firefly when it flashes gold.', {
             fontFamily: 'Arial',
             fontSize: 20,
             color: '#d7e8ff',
@@ -119,7 +139,7 @@ export class Game extends Phaser.Scene {
         // --- Firefly container ---
         // The container is positioned in the middle of the screen.
         // All child objects use positions relative to the container.
-        this.firefly = this.add.container(512, 384, [
+        this.firefly = this.add.container(centerX, 384, [
             outerGlow,
             midGlow,
             innerGlow,
@@ -145,6 +165,10 @@ export class Game extends Phaser.Scene {
         // - clicking outside a flash is wrong
         // Handles scoring and tap stats whenever the firefly is clicked.
         this.firefly.on('pointerdown', () => {
+            if (this.gameOver) {
+                return;
+            }
+
             if (this.isFlashing && !this.hasClickedCurrentFlash) {
                 this.score += 100;
                 this.correctTaps += 1;
@@ -195,9 +219,29 @@ export class Game extends Phaser.Scene {
 
         // Start the flash loop.
         this.scheduleNextFlash();
+
+        // Counts down once per second until the session ends.
+        this.time.addEvent({
+            delay: 1000,
+            repeat: 44,
+            callback: () => {
+                this.timeLeft -= 1;
+                this.timerText.setText(`${this.timeLeft}`);
+
+                if (this.timeLeft <= 0) {
+                    this.gameOver = true;
+                    this.timerText.setText('0');
+                    console.log('Game over.');
+                }
+            }
+        });
     }
 
     moveFirefly() {
+        if (this.gameOver) {
+            return;
+        }
+
         // Pick a random target position inside safe screen bounds.
         // We avoid the very edges so the firefly does not go off-screen.
         const targetX = Phaser.Math.Between(140, 884);
@@ -230,6 +274,10 @@ export class Game extends Phaser.Scene {
     }
 
     startFlash() {
+        if (this.gameOver) {
+            return;
+        }
+
         this.isFlashing = true;
 
         // Change the firefly to gold so the player knows to click.
