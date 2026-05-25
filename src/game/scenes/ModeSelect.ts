@@ -97,5 +97,18 @@ export class ModeSelect extends Phaser.Scene {
         previewFirefly.container.on('pointerdown', () => {
             this.scene.start('FollowMode');
         });
+
+        // Back button to return to the title screen.
+        const backButton = this.add.text(centerX, 690, 'Back to Title', {
+            fontFamily: 'Arial',
+            fontSize: 22,
+            color: '#cfd8ff'
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        backButton.on('pointerdown', () => {
+            this.scene.start('MainMenu');
+        });
     }
 }
