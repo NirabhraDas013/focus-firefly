@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 
-export class Game extends Phaser.Scene {
+export class FollowMode extends Phaser.Scene {
     // This container will hold every visual part of the firefly:
     // glow rings, wings, body, and core.
     // Moving the container moves the whole firefly together.
@@ -57,7 +57,7 @@ export class Game extends Phaser.Scene {
     constructor() {
         // This scene key must match whatever the menu uses:
         // this.scene.start('Game')
-        super('Game');
+        super('FollowMode');
     }
 
     create() {
