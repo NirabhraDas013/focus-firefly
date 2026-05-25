@@ -43,6 +43,16 @@ export class Game extends Phaser.Scene {
     endMessageText!: Phaser.GameObjects.Text;
     restartText!: Phaser.GameObjects.Text;
 
+    // Pause state and pause menu objects.
+    isPaused = false;
+
+    pauseButton!: Phaser.GameObjects.Text;
+    pauseOverlay!: Phaser.GameObjects.Rectangle;
+    pauseTitleText!: Phaser.GameObjects.Text;
+    resumeButton!: Phaser.GameObjects.Text;
+    pauseRestartButton!: Phaser.GameObjects.Text;
+    quitButton!: Phaser.GameObjects.Text;
+
     constructor() {
         // This scene key must match whatever the menu uses:
         // this.scene.start('Game')
@@ -125,6 +135,43 @@ export class Game extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0, 0.5);
 
+        // Top-right pause button.
+        this.pauseButton = this.add.text(950, 40, 'Pause', {
+            fontFamily: 'Arial Black',
+            fontSize: 20,
+            color: '#cfd8ff',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        // Pause button click handler.
+        this.pauseButton.on('pointerdown', () => {
+            if (!this.gameOver) {
+                this.openPauseMenu(centerX);
+            }
+        });
+
+        // Keyboard pause shortcut.
+        this.input.keyboard?.on('keydown-ESC', () => {
+            if (!this.gameOver) {
+                if (this.isPaused) {
+                    this.closePauseMenu();
+                } else {
+                    this.openPauseMenu(centerX);
+                }
+            }
+        });
+
+        this.input.keyboard?.on('keydown-P', () => {
+            if (!this.gameOver) {
+                if (this.isPaused) {
+                    this.closePauseMenu();
+                } else {
+                    this.openPauseMenu(centerX);
+                }
+            }
+        });
+
         // --- Firefly visual pieces ---
         // These circles create a soft glow around the firefly.
         // They are placed at 0,0 because they will live inside the container.
@@ -172,7 +219,7 @@ export class Game extends Phaser.Scene {
         // - clicking outside a flash is wrong
         // Handles scoring and tap stats whenever the firefly is clicked.
         this.firefly.on('pointerdown', () => {
-            if (this.gameOver) {
+            if (this.gameOver || this.isPaused) {
                 return;
             }
 
@@ -232,6 +279,9 @@ export class Game extends Phaser.Scene {
             delay: 1000,
             repeat: 44,
             callback: () => {
+                if (this.isPaused || this.gameOver) {
+                    return;
+                }
                 this.timeLeft -= 1;
                 this.timerText.setText(`${this.timeLeft}`);
 
@@ -349,8 +399,98 @@ export class Game extends Phaser.Scene {
         console.log('Game over.');
     }
 
+    openPauseMenu(centerX: number) {
+        if (this.isPaused) {
+            return;
+        }
+
+        this.isPaused = true;
+
+        // Pause active firefly tweens so the scene visually freezes.
+        this.tweens.pauseAll();
+
+        this.pauseOverlay = this.add.rectangle(centerX, 360, 1024, 768, 0x000000, 0.55);
+
+        this.pauseTitleText = this.add.text(centerX, 230, 'Paused', {
+            fontFamily: 'Arial Black',
+            fontSize: 42,
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 6
+        }).setOrigin(0.5);
+
+        this.resumeButton = this.add.text(centerX, 310, 'Resume', {
+            fontFamily: 'Arial Black',
+            fontSize: 26,
+            color: '#b6ffe8',
+            stroke: '#00251a',
+            strokeThickness: 4
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        this.pauseRestartButton = this.add.text(centerX, 365, 'Restart', {
+            fontFamily: 'Arial Black',
+            fontSize: 26,
+            color: '#ffd27f',
+            stroke: '#2a1600',
+            strokeThickness: 4
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        this.quitButton = this.add.text(centerX, 420, 'Quit to Menu', {
+            fontFamily: 'Arial Black',
+            fontSize: 26,
+            color: '#ffb6b6',
+            stroke: '#2a0000',
+            strokeThickness: 4
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        this.resumeButton.on('pointerdown', () => {
+            this.closePauseMenu();
+        });
+
+        this.pauseRestartButton.on('pointerdown', () => {
+            this.clearPauseState();
+            this.scene.restart();
+        });
+
+        this.quitButton.on('pointerdown', () => {
+            this.clearPauseState();
+            this.scene.start('MainMenu');
+        });
+    }
+
+    closePauseMenu() {
+        if (!this.isPaused) {
+            return;
+        }
+
+        this.clearPauseState();
+
+        // Restart firefly movement after unpausing.
+        this.moveFirefly();
+
+        // Restart the flash loop after unpausing.
+        this.scheduleNextFlash();
+    }
+
+    clearPauseState() {
+        this.isPaused = false;
+        this.tweens.resumeAll();
+
+        this.pauseOverlay?.destroy();
+        this.pauseTitleText?.destroy();
+        this.resumeButton?.destroy();
+        this.pauseRestartButton?.destroy();
+        this.quitButton?.destroy();
+    }
+
     moveFirefly() {
-        if (this.gameOver) {
+        if (this.gameOver || this.isPaused) {
             return;
         }
 
@@ -386,7 +526,7 @@ export class Game extends Phaser.Scene {
     }
 
     startFlash() {
-        if (this.gameOver) {
+        if (this.gameOver || this.isPaused) {
             return;
         }
 
@@ -412,7 +552,7 @@ export class Game extends Phaser.Scene {
     }
 
     endFlash() {
-        if (this.gameOver) {
+        if (this.gameOver || this.isPaused) {
             return;
         }
 
@@ -442,6 +582,9 @@ export class Game extends Phaser.Scene {
 
         this.timeLeft = this.baseTimeLeft;
         this.gameOver = false;
+        this.isPaused = false;
+
+        this.tweens.resumeAll();
 
         this.isFlashing = false;
         this.hasClickedCurrentFlash = false;
