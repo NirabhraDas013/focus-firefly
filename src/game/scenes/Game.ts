@@ -33,11 +33,12 @@ export class Game extends Phaser.Scene {
     missedText!: Phaser.GameObjects.Text;
 
     // Each game session lasts a certain amount of time. This is the countdown timer.
-    baseTimeLeft = 45; //This can move to some sort of editable file later
+    baseTimeLeft = 10; //This can move to some sort of editable file later
     timeLeft = this.baseTimeLeft;
     timerText!: Phaser.GameObjects.Text;
     gameOver = false;
     timerBackground!: Phaser.GameObjects.Rectangle;
+    sessionTimerEvent?: Phaser.Time.TimerEvent;
 
     // This text is shown at the end of the session.
     endMessageText!: Phaser.GameObjects.Text;
@@ -274,18 +275,21 @@ export class Game extends Phaser.Scene {
         // Start the flash loop.
         this.scheduleNextFlash();
 
-        // Counts down once per second until the session ends.
-        this.time.addEvent({
+        // Counts down once per second.
+        // Uses loop instead of repeat so pause does not consume the remaining timer ticks.
+        this.sessionTimerEvent = this.time.addEvent({
             delay: 1000,
-            repeat: 44,
+            loop: true,
             callback: () => {
                 if (this.isPaused || this.gameOver) {
                     return;
                 }
+
                 this.timeLeft -= 1;
                 this.timerText.setText(`${this.timeLeft}`);
 
                 if (this.timeLeft <= 0) {
+                    this.sessionTimerEvent?.destroy();
                     this.endSession(centerX);
                 }
             }
@@ -396,6 +400,7 @@ export class Game extends Phaser.Scene {
         // Prevent accidental instant restart from a click happening as the session ends.
         this.time.delayedCall(500, () => {
             this.input.once('pointerdown', () => {
+                this.sessionTimerEvent?.destroy();
                 this.scene.restart();
             });
         });
@@ -458,11 +463,13 @@ export class Game extends Phaser.Scene {
         });
 
         this.pauseRestartButton.on('pointerdown', () => {
+            this.sessionTimerEvent?.destroy();
             this.clearPauseState();
             this.scene.restart();
         });
 
         this.quitButton.on('pointerdown', () => {
+            this.sessionTimerEvent?.destroy();
             this.clearPauseState();
             this.scene.start('MainMenu');
         });
