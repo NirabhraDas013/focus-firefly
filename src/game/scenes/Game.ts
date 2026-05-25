@@ -1,7 +1,6 @@
 import * as Phaser from 'phaser';
 
-export class Game extends Phaser.Scene
-{
+export class Game extends Phaser.Scene {
     // This container will hold every visual part of the firefly:
     // glow rings, wings, body, and core.
     // Moving the container moves the whole firefly together.
@@ -15,15 +14,17 @@ export class Game extends Phaser.Scene
     // Tracks whether the player should currently click/tap.
     isFlashing = false;
 
-    constructor ()
-    {
+    // Basic score state for the current session.
+    score = 0;
+    scoreText!: Phaser.GameObjects.Text;
+
+    constructor() {
         // This scene key must match whatever the menu uses:
         // this.scene.start('Game')
         super('Game');
     }
 
-    create ()
-    {
+    create() {
         // Set the main play-area background color.
         this.cameras.main.setBackgroundColor('#080b2f');
 
@@ -44,6 +45,16 @@ export class Game extends Phaser.Scene
             color: '#d7e8ff',
             align: 'center'
         }).setOrigin(0.5);
+
+        // Score display.
+        // setOrigin(0, 0.5) means the text is anchored from its left-center.
+        this.scoreText = this.add.text(40, 60, 'Score: 0', {
+            fontFamily: 'Arial Black',
+            fontSize: 24,
+            color: '#8cffd2',
+            stroke: '#00251a',
+            strokeThickness: 4
+        }).setOrigin(0, 0.5);
 
         // --- Firefly visual pieces ---
         // These circles create a soft glow around the firefly.
@@ -86,10 +97,20 @@ export class Game extends Phaser.Scene
             useHandCursor: true
         });
 
-        // Temporary click test.
-        // Later this will become correct/wrong tap scoring.
+        // Firefly click/tap scoring.
+        // For now:
+        // - clicking during a flash is correct
+        // - clicking outside a flash is wrong
         this.firefly.on('pointerdown', () => {
-            console.log('Firefly clicked. Flashing:', this.isFlashing);
+            if (this.isFlashing) {
+                this.score += 100;
+                console.log('Correct tap!');
+            } else {
+                this.score -= 25;
+                console.log('Wrong tap.');
+            }
+
+            this.scoreText.setText(`Score: ${this.score}`);
         });
 
         // --- Glow pulse animation ---
@@ -122,8 +143,7 @@ export class Game extends Phaser.Scene
         this.scheduleNextFlash();
     }
 
-    moveFirefly ()
-    {
+    moveFirefly() {
         // Pick a random target position inside safe screen bounds.
         // We avoid the very edges so the firefly does not go off-screen.
         const targetX = Phaser.Math.Between(140, 884);
@@ -145,8 +165,7 @@ export class Game extends Phaser.Scene
         });
     }
 
-    scheduleNextFlash ()
-    {
+    scheduleNextFlash() {
         // Pick a random delay before the next flash.
         // This prevents the player from knowing exactly when it will happen.
         const delay = Phaser.Math.Between(1500, 3000);
@@ -156,8 +175,7 @@ export class Game extends Phaser.Scene
         });
     }
 
-    startFlash ()
-    {
+    startFlash() {
         this.isFlashing = true;
 
         // Change the firefly to gold so the player knows to click.
@@ -179,8 +197,7 @@ export class Game extends Phaser.Scene
         });
     }
 
-    endFlash ()
-    {
+    endFlash() {
         this.isFlashing = false;
 
         // Return to normal firefly colors.
