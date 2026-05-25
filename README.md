@@ -8,7 +8,7 @@ This is a vision-inspired interactive mini-game prototype for portfolio/demo pur
 
 ## Live Demo
 
-Coming soon.
+[Focus Firefly](https://focusfirefly.netlify.app/)
 
 ## Features
 
