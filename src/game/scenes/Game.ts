@@ -14,6 +14,9 @@ export class Game extends Phaser.Scene {
     // Tracks whether the player should currently click/tap.
     isFlashing = false;
 
+    // Prevents the player from scoring multiple times during one flash.
+    hasClickedCurrentFlash = false;
+
     // Basic score state for the current session.
     score = 0;
     scoreText!: Phaser.GameObjects.Text;
@@ -102,12 +105,15 @@ export class Game extends Phaser.Scene {
         // - clicking during a flash is correct
         // - clicking outside a flash is wrong
         this.firefly.on('pointerdown', () => {
-            if (this.isFlashing) {
+            if (this.isFlashing && !this.hasClickedCurrentFlash) {
                 this.score += 100;
+                this.hasClickedCurrentFlash = true;
                 console.log('Correct tap!');
-            } else {
-                this.score -= 25;
+            } else if (!this.isFlashing) {
+                this.score = Math.max(0, this.score - 25);
                 console.log('Wrong tap.');
+            } else {
+                console.log('Already clicked this flash.');
             }
 
             this.scoreText.setText(`Score: ${this.score}`);
@@ -199,6 +205,7 @@ export class Game extends Phaser.Scene {
 
     endFlash() {
         this.isFlashing = false;
+        this.hasClickedCurrentFlash = false;
 
         // Return to normal firefly colors.
         this.fireflyBody.setFillStyle(0x5fffc9, 1);
