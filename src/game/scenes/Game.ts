@@ -26,6 +26,10 @@ export class Game extends Phaser.Scene {
     correctTaps = 0;
     wrongTaps = 0;
 
+    //Track missed flashes (not clicking during a flash)
+    missedFlashes = 0;
+    missedText!: Phaser.GameObjects.Text;
+
     correctText!: Phaser.GameObjects.Text;
     wrongText!: Phaser.GameObjects.Text;
 
@@ -82,6 +86,15 @@ export class Game extends Phaser.Scene {
             fontSize: 18,
             color: '#ffb6b6',
             stroke: '#2a0000',
+            strokeThickness: 3
+        }).setOrigin(0, 0.5);
+
+        // Shows how many flashes the player has missed (not clicking during a flash).
+        this.missedText = this.add.text(40, 149, 'Missed: 0', {
+            fontFamily: 'Arial Black',
+            fontSize: 18,
+            color: '#ffd27f',
+            stroke: '#2a1600',
             strokeThickness: 3
         }).setOrigin(0, 0.5);
 
@@ -239,6 +252,12 @@ export class Game extends Phaser.Scene {
     }
 
     endFlash() {
+        // If the player did not click during the flash, count it as a miss.
+        if (!this.hasClickedCurrentFlash) {
+            this.missedFlashes += 1;
+            this.missedText.setText(`Missed: ${this.missedFlashes}`);
+        }
+
         this.isFlashing = false;
         this.hasClickedCurrentFlash = false;
 
