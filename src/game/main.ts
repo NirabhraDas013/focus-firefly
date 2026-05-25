@@ -1,7 +1,8 @@
 import { Boot } from './scenes/Boot';
 import { GameOver } from './scenes/GameOver';
-import { FollowMode } from './scenes/FollowMode';
 import { MainMenu } from './scenes/MainMenu';
+import { ModeSelect } from './scenes/ModeSelect';
+import { FollowMode } from './scenes/FollowMode';
 import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
 
@@ -17,6 +18,7 @@ const config: Phaser.Types.Core.GameConfig = {
         Boot,
         Preloader,
         MainMenu,
+        ModeSelect,
         FollowMode,
         GameOver
     ]
