@@ -33,7 +33,7 @@ export class Game extends Phaser.Scene {
     missedText!: Phaser.GameObjects.Text;
 
     // Each game session lasts a certain amount of time. This is the countdown timer.
-    baseTimeLeft = 5; //This can move to some sort of editable file later
+    baseTimeLeft = 45; //This can move to some sort of editable file later
     timeLeft = this.baseTimeLeft;
     timerText!: Phaser.GameObjects.Text;
     gameOver = false;

@@ -1,158 +1,145 @@
-# Phaser Vite TypeScript Template
+# Focus Firefly
 
-This is a Phaser project template that uses Vite for bundling. It supports hot-reloading for quick development workflow, includes TypeScript support and scripts to generate production-ready builds.
+**Focus Firefly** is a short browser-based visual tracking and attention game built with **Phaser**, **TypeScript**, and **Vite**.
 
-**[This Template is also available as a JavaScript version.](https://github.com/phaserjs/template-vite)**
+The player follows a glowing firefly as it moves around the screen and clicks or taps it only when it flashes gold. Each session lasts 45 seconds and ends with a summary showing score, correct taps, wrong taps, missed flashes, accuracy, and simple feedback.
 
-### Versions
+This is a vision-inspired interactive mini-game prototype for portfolio/demo purposes. It is **not** medical treatment or a clinically validated vision therapy tool.
 
-This template has been updated for:
+## Live Demo
 
-- [Phaser 4](https://github.com/phaserjs/phaser)
-- [Vite 6.3.1](https://github.com/vitejs/vite)
-- [TypeScript 5.7.2](https://github.com/microsoft/TypeScript)
+Coming soon.
 
-![screenshot](screenshot.png)
+## Features
 
-## Requirements
+- Custom title screen
+- Dark blue/purple visual style
+- Safety disclaimer
+- Moving firefly built with Phaser shape objects
+- Smooth random movement using tweens
+- Glow pulse and wing flap animations
+- Gold flash timing challenge
+- Click/tap scoring
+- Anti-spam scoring so only one correct tap counts per flash
+- Score cannot go below zero
+- 45-second session countdown
+- Pause menu with Resume, Restart, and Quit to Menu
+- End-of-session summary
+- Accuracy feedback
+- Restart flow
 
-[Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
+## How to Play
 
-## Available Commands
+1. Click or tap **Start** from the title screen.
+2. Follow the moving firefly.
+3. Click or tap the firefly only when it flashes gold.
+4. Avoid clicking when it is not flashing.
+5. Review your results after the 45-second session.
 
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install project dependencies |
-| `npm run dev` | Launch a development web server |
-| `npm run build` | Create a production build in the `dist` folder |
-| `npm run dev-nolog` | Launch a development web server without sending anonymous data (see "About log.js" below) |
-| `npm run build-nolog` | Create a production build in the `dist` folder without sending anonymous data (see "About log.js" below) |
+## Controls
 
-## Writing Code
+| Action | Control |
+|---|---|
+| Start game | Click / tap |
+| Click firefly | Mouse click / tap |
+| Pause | Pause button, `Esc`, or `P` |
+| Resume | Resume button, `Esc`, or `P` |
+| Restart | Restart button |
+| Quit to menu | Quit to Menu button |
 
-After cloning the repo, run `npm install` from your project directory. Then, you can start the local development server by running `npm run dev`.
+## Scoring
 
-The local development server runs on `http://localhost:8080` by default. Please see the Vite documentation if you wish to change this, or add SSL support.
+| Action | Result |
+|---|---|
+| Correct tap during gold flash | +100 score |
+| Wrong tap outside gold flash | -25 score |
+| Extra taps during the same flash | No extra score |
+| Missed flash | Counted in final stats |
 
-Once the server is running you can edit any of the files in the `src` folder. Vite will automatically recompile your code and then reload the browser.
+The score cannot go below zero.
 
-## Template Project Structure
+## Session Results
 
-We have provided a default project structure to get you started. This is as follows:
+At the end of each session, the game shows:
 
-## Template Project Structure
+- Final score
+- Correct taps
+- Wrong taps
+- Missed flashes
+- Accuracy percentage
+- Feedback message
 
-We have provided a default project structure to get you started:
+Current accuracy formula:
 
-| Path                         | Description                                                |
-|------------------------------|------------------------------------------------------------|
-| `index.html`                 | A basic HTML page to contain the game.                     |
-| `public/assets`              | Game sprites, audio, etc. Served directly at runtime.      |
-| `public/style.css`           | Global layout styles.                                      |
-| `src/main.ts`                | Application bootstrap.                                     |
-| `src/game`                   | Folder containing the game code.                           |
-| `src/game/main.ts`           | Game entry point: configures and starts the game.          |
-| `src/game/scenes`            | Folder with all Phaser game scenes.                        | 
-
-
-## Handling Assets
-
-Vite supports loading assets via JavaScript module `import` statements.
-
-This template provides support for both embedding assets and also loading them from a static folder. To embed an asset, you can import it at the top of the JavaScript file you are using it in:
-
-```js
-import logoImg from './assets/logo.png'
+```text
+correct taps / (correct taps + wrong taps + missed flashes)
 ```
 
-To load static files such as audio files, videos, etc place them into the `public/assets` folder. Then you can use this path in the Loader calls within Phaser:
+## Tech Stack
 
-```js
-preload ()
-{
-    //  This is an example of an imported bundled image.
-    //  Remember to import it at the top of this file
-    this.load.image('logo', logoImg);
+- Phaser
+- TypeScript
+- Vite
+- HTML/CSS
+- GitHub
 
-    //  This is an example of loading a static image
-    //  from the public/assets folder:
-    this.load.image('background', 'assets/bg.png');
-}
-```
+## Local Development
 
-When you issue the `npm run build` command, all static assets are automatically copied to the `dist/assets` folder.
-
-## Deploying to Production
-
-After you run the `npm run build` command, your code will be built into a single bundle and saved to the `dist` folder, along with any other assets your project imported, or stored in the public assets folder.
-
-In order to deploy your game, you will need to upload *all* of the contents of the `dist` folder to a public facing web server.
-
-## Customizing the Template
-
-### Vite
-
-If you want to customize your build, such as adding plugin (i.e. for loading CSS or fonts), you can modify the `vite/config.*.mjs` file for cross-project changes, or you can modify and/or create new configuration files and target them in specific npm tasks inside of `package.json`. Please see the [Vite documentation](https://vitejs.dev/) for more information.
-
-## About log.js
-
-If you inspect our node scripts you will see there is a file called `log.js`. This file makes a single silent API call to a domain called `gryzor.co`. This domain is owned by Phaser Studio Inc. The domain name is a homage to one of our favorite retro games.
-
-We send the following 3 pieces of data to this API: The name of the template being used (vue, react, etc). If the build was 'dev' or 'prod' and finally the version of Phaser being used.
-
-At no point is any personal data collected or sent. We don't know about your project files, device, browser or anything else. Feel free to inspect the `log.js` file to confirm this.
-
-Why do we do this? Because being open source means we have no visible metrics about which of our templates are being used. We work hard to maintain a large and diverse set of templates for Phaser developers and this is our small anonymous way to determine if that work is actually paying off, or not. In short, it helps us ensure we're building the tools for you.
-
-However, if you don't want to send any data, you can use these commands instead:
-
-Dev:
+Install dependencies:
 
 ```bash
-npm run dev-nolog
+npm install
 ```
 
-Build:
+Run the local dev server:
 
 ```bash
-npm run build-nolog
+npm run dev
 ```
 
-Or, to disable the log entirely, simply delete the file `log.js` and remove the call to it in the `scripts` section of `package.json`:
+Build for production:
 
-Before:
-
-```json
-"scripts": {
-    "dev": "node log.js dev & dev-template-script",
-    "build": "node log.js build & build-template-script"
-},
+```bash
+npm run build
 ```
 
-After:
+Preview the production build:
 
-```json
-"scripts": {
-    "dev": "dev-template-script",
-    "build": "build-template-script"
-},
+```bash
+npm run preview
 ```
 
-Either of these will stop `log.js` from running. If you do decide to do this, please could you at least join our Discord and tell us which template you're using! Or send us a quick email. Either will be super-helpful, thank you.
+## Safety Note
 
-## Join the Phaser Community!
+Focus Firefly is a simple visual attention game and portfolio prototype.
 
-We love to see what developers like you create with Phaser! It really motivates us to keep improving. So please join our community and show-off your work 😄
+Stop playing if you feel eye strain, headache, dizziness, nausea, or discomfort. Use short sessions with breaks.
 
-**Visit:** The [Phaser website](https://phaser.io) and follow on [Phaser Twitter](https://twitter.com/phaser_)<br />
-**Play:** Some of the amazing games [#madewithphaser](https://twitter.com/search?q=%23madewithphaser&src=typed_query&f=live)<br />
-**Learn:** [API Docs](https://newdocs.phaser.io), [Support Forum](https://phaser.discourse.group/) and [StackOverflow](https://stackoverflow.com/questions/tagged/phaser-framework)<br />
-**Discord:** Join us on [Discord](https://discord.gg/phaser)<br />
-**Code:** 2000+ [Examples](https://labs.phaser.io)<br />
-**Read:** The [Phaser World](https://phaser.io/community/newsletter) Newsletter<br />
+This project should not be treated as medical advice, medical treatment, or clinically validated vision therapy.
 
-Created by [Phaser Studio](mailto:support@phaser.io). Powered by coffee, anime, pixels and love.
+## Current Status
 
-The Phaser logo and characters are &copy; 2011 - 2025 Phaser Studio Inc.
+Follow Mode v1 is playable and feature-frozen for initial deployment.
 
-All rights reserved.
+Remaining launch tasks:
+
+- Add screenshot or GIF
+- Deploy live demo
+- Add live demo link to this README
+
+## Future Improvements
+
+Future gameplay should be added as parallel modes instead of expanding Follow Mode.
+
+Possible future modes:
+
+- **Jump Mode**: fireflies or targets appear in different positions for quick reaction taps.
+- **Merge Mode**: two fireflies move toward each other, and the player taps when they overlap.
+
+Possible polish:
+
+- Screenshot or GIF in README
+- Subtle particle trail
+- Background stars/dots
+- Average reaction time tracking
+- Responsive layout improvements
