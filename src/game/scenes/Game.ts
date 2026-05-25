@@ -339,8 +339,11 @@ export class Game extends Phaser.Scene {
             color: '#cfd8ff'
         }).setOrigin(0.5);
 
-        this.input.once('pointerdown', () => {
-            this.scene.restart();
+        // Prevent accidental instant restart from a click happening as the session ends.
+        this.time.delayedCall(500, () => {
+            this.input.once('pointerdown', () => {
+                this.scene.restart();
+            });
         });
 
         console.log('Game over.');
