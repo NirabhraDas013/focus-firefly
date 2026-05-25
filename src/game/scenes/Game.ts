@@ -259,6 +259,13 @@ export class Game extends Phaser.Scene {
         this.wrongText.setVisible(false);
         this.missedText.setVisible(false);
 
+        // Calculate final accuracy from all flash-related outcomes.
+        const totalAttempts = this.correctTaps + this.wrongTaps + this.missedFlashes;
+
+        const accuracy = totalAttempts > 0
+            ? Math.round((this.correctTaps / totalAttempts) * 100)
+            : 0;
+
         this.endMessageText = this.add.text(centerX, 270, 'Session Complete', {
             fontFamily: 'Arial Black',
             fontSize: 36,
@@ -304,7 +311,29 @@ export class Game extends Phaser.Scene {
             }).setOrigin(0.5)
         ]);
 
-        this.restartText = this.add.text(centerX, 370, 'Click or tap to try again', {
+        this.add.text(centerX, 355, `Accuracy: ${accuracy}%`, {
+            fontFamily: 'Arial Black',
+            fontSize: 22,
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+
+        let feedbackMessage = 'Good effort. Try again and watch for the gold flash.';
+
+        if (accuracy >= 80) {
+            feedbackMessage = 'Great focus!';
+        } else if (accuracy >= 50) {
+            feedbackMessage = 'Nice work. Keep tracking the firefly.';
+        }
+
+        this.add.text(centerX, 390, feedbackMessage, {
+            fontFamily: 'Arial',
+            fontSize: 22,
+            color: '#cfd8ff'
+        }).setOrigin(0.5);
+
+        this.restartText = this.add.text(centerX, 430, 'Click or tap to try again', {
             fontFamily: 'Arial',
             fontSize: 22,
             color: '#cfd8ff'
