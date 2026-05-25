@@ -38,6 +38,9 @@ export class Game extends Phaser.Scene {
     gameOver = false;
     timerBackground!: Phaser.GameObjects.Rectangle;
 
+    // This text appears at the end of the game to show the final score and feedback.
+    endMessageText!: Phaser.GameObjects.Text;
+
     constructor() {
         // This scene key must match whatever the menu uses:
         // this.scene.start('Game')
@@ -231,6 +234,15 @@ export class Game extends Phaser.Scene {
                 if (this.timeLeft <= 0) {
                     this.gameOver = true;
                     this.timerText.setText('0');
+
+                    this.endMessageText = this.add.text(centerX, 230, 'Session Complete', {
+                        fontFamily: 'Arial Black',
+                        fontSize: 36,
+                        color: '#ffffff',
+                        stroke: '#000000',
+                        strokeThickness: 6
+                    }).setOrigin(0.5);
+
                     console.log('Game over.');
                 }
             }
